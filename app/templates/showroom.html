@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Vehicles for sale{% endblock %}
+{% block n3 %}on{% endblock %}
+{% block body %}
+<h1>Available now</h1>
+<p class="sub">Imported directly from Japanese auctions. Auction sheet and full
+inspection report supplied with every vehicle.</p>
+
+<div class="grid g2">
+{% for x in listings %}
+  <div class="stat">
+    <span class="pill {{ 'live' if x.status.value == 'for_sale' else '' }}">
+      {{ x.status.value.replace("_", " ") }}</span>
+    <b style="font-size:17px;margin-top:8px">{{ x.title }}</b>
+    <p class="note" style="margin:6px 0 10px">
+      {{ x.engine_cc }}cc {{ x.fuel }} &middot;
+      {{ "{:,}".format(x.mileage_km) }} km
+      {% if x.auction_grade %}&middot; auction grade {{ x.auction_grade }}{% endif %}
+    </p>
+    <div style="font-size:21px;font-weight:650;color:var(--seal)">
+      LKR {{ "{:,.0f}".format(x.asking_price_lkr) }}</div>
+    {% if x.notes %}<p class="note" style="margin-top:10px">{{ x.notes }}</p>{% endif %}
+  </div>
+{% else %}
+  <p class="note">No vehicles listed right now. Check back soon.</p>
+{% endfor %}
+</div>
+{% endblock %}

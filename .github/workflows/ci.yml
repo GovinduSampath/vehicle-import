@@ -1,0 +1,99 @@
+name: CI
+
+# Run on every PR and on main. Nothing here deploys -- CI proves the code is
+# good, CD (a separate workflow) decides where it goes.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  # A new push to the same branch cancels the old run. Saves minutes and stops
+  # two runs racing to report a status on the same commit.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Format check
+        run: ruff format --check .
+
+      - name: Type check
+        run: mypy app
+
+      - name: Tests
+        run: pytest -v --junitxml=results.xml
+
+      - name: Publish test report
+        if: always()          # runs even when the tests failed -- that is when you need it
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-py${{ matrix.python }}
+          path: results.xml
+
+  image:
+    needs: quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}   # short-lived, scoped, never a PAT
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # Tag with the commit SHA, never `latest`. Build once, deploy that
+          # exact artifact everywhere -- staging and production run identical bytes.
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          push: ${{ github.event_name == 'push' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: "1"        # a vulnerable image is a failed build
+          ignore-unfixed: true  # do not block on CVEs with no patch available
+
+      - name: Smoke test the built image
+        run: |
+          docker run -d --name smoke -p 8000:8000 \
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          for i in $(seq 1 20); do
+            curl -fs http://localhost:8000/readyz && exit 0
+            sleep 1
+          done
+          echo "container never became ready"; docker logs smoke; exit 1

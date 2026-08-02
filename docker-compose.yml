@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql+psycopg://vi:vi@db:5432/vi
+    depends_on:
+      db: { condition: service_healthy }
+    # Live reload in dev only. Production runs the baked image, never a bind mount.
+    volumes: ["./app:/app/app:ro"]
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vi
+      POSTGRES_PASSWORD: vi
+      POSTGRES_DB: vi
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vi"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:

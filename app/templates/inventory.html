@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+{% block n2 %}on{% endblock %}
+{% block body %}
+<h1>Inventory</h1>
+<p class="sub">Every unit you are sourcing, shipping, or selling. Cost and margin
+live here and never appear in the showroom.</p>
+
+<div class="grid g4" style="margin-bottom:26px">
+  <div class="stat">Units <b>{{ summary.units_total }}</b></div>
+  <div class="stat">Sold <b>{{ summary.units_sold }}</b></div>
+  <div class="stat">Capital tied up
+    <b>{{ "{:,.0f}".format(summary.capital_tied_up) }}</b></div>
+  <div class="stat">Realised profit
+    <b style="color:var(--good)">{{ "{:,.0f}".format(summary.realised_profit) }}</b></div>
+</div>
+
+<h2>Units</h2>
+<table>
+  <thead><tr>
+    <th>Vehicle</th><th>Chassis</th><th>Grade</th><th class="num">Cost</th>
+    <th class="num">Asking</th><th class="num">Margin</th><th>Status</th>
+  </tr></thead>
+  <tbody>
+  {% for x in listings %}
+    <tr>
+      <td>{{ x.title }}<br><span class="note">{{ x.engine_cc }}cc
+        {{ x.fuel }} &middot; {{ "{:,}".format(x.mileage_km) }} km</span></td>
+      <td class="note">{{ x.chassis_no or "&mdash;" | safe }}</td>
+      <td>{{ x.auction_grade or "—" }}</td>
+      <td class="num">{{ "{:,.0f}".format(x.total_cost_lkr) }}</td>
+      <td class="num">{{ "{:,.0f}".format(x.realised_price) }}</td>
+      <td class="num" style="color:{{ 'var(--good)' if x.profit > 0 else 'var(--seal)' }}">
+        {{ "{:,.0f}".format(x.profit) }}<br>
+        <span class="note">{{ x.margin_pct }}%</span></td>
+      <td>
+        <form method="post" action="/inventory/{{ x.id }}/status"
+              style="display:flex;gap:4px;align-items:center">
+          <select name="status" style="padding:4px;font-size:12px">
+            {% for s in statuses %}
+            <option value="{{ s.value }}" {% if s == x.status %}selected{% endif %}>
+              {{ s.value.replace("_", " ") }}</option>
+            {% endfor %}
+          </select>
+          <input name="sold_price_lkr" placeholder="sold at"
+                 style="padding:4px;font-size:12px;width:90px">
+          <button style="padding:5px 8px;font-size:11px">Set</button>
+        </form>
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7" class="note">Nothing yet. Add your first unit below —
+      start with the one sitting in your driveway.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2>Add a unit</h2>
+<form method="post" action="/inventory">
+  <div class="grid g4">
+    <div><label>Make</label><input name="make" value="Nissan" required></div>
+    <div><label>Model</label><input name="model" value="Roox" required></div>
+    <div><label>Grade</label><input name="grade" placeholder="Highway Star X"></div>
+    <div><label>Year</label><input name="year" value="2023" required></div>
+    <div><label>Chassis no</label><input name="chassis_no" placeholder="B44A-xxxxxxx"></div>
+    <div><label>Engine cc</label><input name="engine_cc" value="659"></div>
+    <div><label>Fuel</label><select name="fuel">
+      <option>petrol</option><option>diesel</option>
+      <option>hybrid</option><option>electric</option></select></div>
+    <div><label>Mileage km</label><input name="mileage_km" value="0"></div>
+    <div><label>Auction grade</label><input name="auction_grade" placeholder="4.5 B"></div>
+    <div><label>CIF (JPY)</label><input name="cif_jpy" value="0"></div>
+    <div><label>FX rate used</label><input name="fx_rate" value="2.05"></div>
+    <div><label>Total cost LKR</label><input name="total_cost_lkr" value="0"></div>
+    <div><label>Asking price LKR</label><input name="asking_price_lkr" value="0"></div>
+    <div><label>Status</label><select name="status">
+      {% for s in statuses %}<option value="{{ s.value }}">
+        {{ s.value.replace("_", " ") }}</option>{% endfor %}</select></div>
+  </div>
+  <p style="margin-top:16px"><button type="submit">Add unit</button></p>
+</form>
+{% endblock %}

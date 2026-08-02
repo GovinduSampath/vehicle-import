@@ -1,0 +1,63 @@
+{% if error %}
+  <p style="border-left:3px solid var(--seal);padding:10px 14px;background:#fff">{{ error }}</p>
+{% elif c %}
+<h2>Assessment</h2>
+<table>
+  <thead><tr><th>Line</th><th class="num">Rate</th><th class="num">LKR</th></tr></thead>
+  <tbody>
+    <tr><td>CIF, {{ "{:,.0f}".format(c.cif_foreign) }} {{ c.fx.currency }}
+        &times; {{ c.fx.rate }}</td><td></td>
+      <td class="num">{{ "{:,.2f}".format(c.fx.to_lkr(c.cif_foreign)) }}</td></tr>
+    {% if c.dutiable_extras > 0 %}
+    <tr><td>Dutiable extras folded into CIF</td><td></td>
+      <td class="num">{{ "{:,.2f}".format(c.dutiable_extras) }}</td></tr>
+    <tr><td><b>Assessed CIF</b></td><td></td>
+      <td class="num"><b>{{ "{:,.2f}".format(c.quote.cif) }}</b></td></tr>
+    {% endif %}
+    {% for line in c.quote.lines %}
+    <tr><td>{{ line.name }}</td>
+      <td class="num" style="color:var(--muted)">
+        {% if line.per_unit %}
+          {{ "{:,.2f}".format(line.rate) }} / {{ line.unit }}
+          &times; {{ "{:,.0f}".format(line.base) }}
+        {% else %}
+          {{ "{:.1f}".format(line.rate * 100) }}%
+        {% endif %}</td>
+      <td class="num">{{ "{:,.2f}".format(line.amount) }}</td></tr>
+    {% endfor %}
+    <tr><td><b>Landed cost</b></td><td></td>
+      <td class="num"><b>{{ "{:,.2f}".format(c.quote.landed_cost) }}</b></td></tr>
+  </tbody>
+</table>
+
+<h2>Costs outside duty</h2>
+<table>
+  <tbody>
+    {% for item in c.costs if not item.dutiable and item.amount > 0 %}
+    <tr><td>{{ item.label }}</td>
+      <td class="num">{{ "{:,.2f}".format(item.amount) }}</td></tr>
+    {% else %}
+    <tr><td class="note">None entered</td><td class="num note">0.00</td></tr>
+    {% endfor %}
+    <tr><td><b>Total cost to you</b></td>
+      <td class="num"><b style="color:var(--seal)">
+        {{ "{:,.2f}".format(c.total_cost) }}</b></td></tr>
+  </tbody>
+</table>
+
+<h2>Selling</h2>
+<div class="grid g3">
+  <div class="stat">Sell at {{ target_margin }}% margin
+    <b>{{ "{:,.0f}".format(suggested_price) }}</b></div>
+  <div class="stat">Profit at that price
+    <b style="color:var(--good)">
+      {{ "{:,.0f}".format(c.profit_at_price(suggested_price)) }}</b></div>
+  <div class="stat">Duty as share of cost
+    <b>{{ "{:.0f}".format(c.quote.total_tax / c.total_cost * 100) }}%</b></div>
+</div>
+
+<p class="note" style="margin-top:18px">
+  Assessed under gazette {{ c.quote.gazette }} ({{ c.quote.ruleset_id }}).
+  Margin is on the selling price, not markup on cost. Estimate only &mdash; confirm
+  with Sri Lanka Customs or a licensed clearing agent before committing money.</p>
+{% endif %}

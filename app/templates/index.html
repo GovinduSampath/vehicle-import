@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Landed cost calculator{% endblock %}
+{% block n1 %}on{% endblock %}
+{% block body %}
+<h1>What will this car cost me, landed and on the road?</h1>
+<p class="sub">Enter the auction price in yen. Duty is assessed under the gazette in
+force on your chosen date, so you can compare today against last month.</p>
+
+<form hx-post="/quote" hx-target="#result" hx-swap="innerHTML">
+  <h2>Purchase</h2>
+  <div class="grid g4">
+    <div><label for="cif_foreign">CIF value</label>
+      <input id="cif_foreign" name="cif_foreign" value="877996" inputmode="decimal"></div>
+    <div><label for="currency">Currency</label>
+      <select id="currency" name="currency"><option>JPY</option><option>USD</option></select></div>
+    <div><label for="fx_rate">Rate to LKR</label>
+      <input id="fx_rate" name="fx_rate" value="2.05" inputmode="decimal"></div>
+    <div><label for="as_of">Assess on date</label>
+      <input id="as_of" name="as_of" type="date" value="2026-05-20"></div>
+  </div>
+
+  <h2>Vehicle</h2>
+  <div class="grid g4">
+    <div><label for="fuel">Fuel</label>
+      <select id="fuel" name="fuel">
+        <option value="petrol">Petrol</option><option value="diesel">Diesel</option>
+        <option value="hybrid">Hybrid</option><option value="electric">Electric</option>
+      </select></div>
+    <div><label for="engine_cc">Engine cc</label>
+      <input id="engine_cc" name="engine_cc" value="659" inputmode="numeric"></div>
+    <div><label for="motor_kw">Motor kW (EV)</label>
+      <input id="motor_kw" name="motor_kw" value="0" inputmode="numeric"></div>
+    <div><label for="year">Manufacture year</label>
+      <input id="year" name="year" value="2024" inputmode="numeric"></div>
+  </div>
+
+  <h2>Other costs</h2>
+  <p class="note" style="margin:-6px 0 12px">Ticked items are folded into CIF and
+    therefore attract duty on top. A commission paid to the exporter's agent normally
+    is dutiable; your own agent's fee normally is not. Confirm with your clearing agent.</p>
+  <div class="grid g3">
+    {% for c in costs %}
+    <div>
+      <label for="cost_{{ c.code }}">{{ c.label }}</label>
+      <input id="cost_{{ c.code }}" name="cost_{{ c.code }}" value="0" inputmode="decimal">
+      <span class="chk">
+        <input type="checkbox" id="dutiable_{{ c.code }}" name="dutiable_{{ c.code }}"
+               {% if c.dutiable %}checked{% endif %}>
+        <label for="dutiable_{{ c.code }}" style="margin:0" class="dutiable">Dutiable</label>
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2>Your margin</h2>
+  <div class="grid g4">
+    <div><label for="target_margin">Target margin %</label>
+      <input id="target_margin" name="target_margin" value="15" inputmode="decimal"></div>
+  </div>
+
+  <p style="margin-top:22px"><button type="submit">Calculate</button></p>
+</form>
+
+<div id="result"></div>
+{% endblock %}

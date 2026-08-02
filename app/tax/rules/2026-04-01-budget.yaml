@@ -1,0 +1,88 @@
+# ============================================================================
+#  Reverse-engineered from PiXAMP's published output, NOT from the gazette.
+#  Verified against their worked example: 659cc petrol, CIF 20,000 JPY @ 2.03.
+#    CID 12,180 = 30% of CIF 40,600
+#    SUR  6,090 = 50% of CID
+#    XID 1,992,000 -> 1,992,000 / 659cc = 3,022.76 per cc
+#
+#  The per-cc excise figure is the weak point. 3,022.76 is an odd number and
+#  is almost certainly a rounded band rate, or a rate that varies with the
+#  manufacture year. Get the Excise (Special Provisions) order schedule and
+#  replace the whole `bands` list below with the real per-cc table.
+# ============================================================================
+gazette: "2434/04 + Budget 2026"
+title: "Post-Budget 2026, before the May surcharge"
+effective_from: "2026-04-01"
+effective_to: "2026-05-15"
+
+levies:
+  - code: CID
+    name: Customs Import Duty
+    base: [CIF]
+    rate: 0.30
+
+
+  # Excise on motor cars is a SPECIFIC duty: rupees per cubic centimetre.
+  # It does not look at the value of the car at all. This is why a cheap kei
+  # import still attracts around two million rupees of excise.
+  - code: XID
+    name: Excise Duty
+    base: [CIF]          # ignored for per_unit levies; kept for readability
+    applies_when:
+      fuel: [petrol, hybrid]
+    per_unit:
+      field: engine_cc
+      unit: cc
+      bands:
+        - { up_to: 1000, amount: 3022.76 }
+        - { up_to: 1300, amount: 3800.00 }
+        - { up_to: 1500, amount: 4500.00 }
+        - { up_to: 1600, amount: 5000.00 }
+        - { up_to: 2000, amount: 6500.00 }
+        - { up_to: 2500, amount: 8000.00 }
+        - { up_to: 3000, amount: 9500.00 }
+        - { up_to: null, amount: 11000.00 }
+
+  - code: XID
+    name: Excise Duty (diesel)
+    base: [CIF]
+    applies_when:
+      fuel: [diesel]
+    per_unit:
+      field: engine_cc
+      unit: cc
+      bands:
+        - { up_to: 1500, amount: 5500.00 }
+        - { up_to: 2000, amount: 7500.00 }
+        - { up_to: 2500, amount: 9500.00 }
+        - { up_to: null, amount: 12000.00 }
+
+  - code: XID
+    name: Excise Duty (electric)
+    base: [CIF]
+    applies_when:
+      fuel: [electric]
+    per_unit:
+      field: motor_kw
+      unit: kW
+      bands:
+        - { up_to: 50, amount: 15000.00 }
+        - { up_to: 100, amount: 30000.00 }
+        - { up_to: 200, amount: 45000.00 }
+        - { up_to: null, amount: 60000.00 }
+
+  - code: LXT
+    name: Luxury Tax
+    base: [CIF]
+    excess_over: 5000000
+    rate: 0.60
+
+  - code: SSCL
+    name: Social Security Contribution Levy
+    base: [CIF, CID, XID, LXT]
+    rate: 0.025
+
+  - code: VAT
+    name: Value Added Tax
+    base: [CIF, CID, XID, LXT, SSCL]
+    rate: 0.18

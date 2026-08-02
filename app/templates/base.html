@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Vehicle Import{% endblock %}</title>
+<script src="https://unpkg.com/htmx.org@2.0.3"></script>
+<style>
+  :root {
+    --paper:#faf8f4; --ink:#14120f; --rule:#ddd7ca; --seal:#c8102e;
+    --muted:#6f6a60; --good:#1d6f42; --card:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+       font:15px/1.55 ui-sans-serif,system-ui,"Helvetica Neue",sans-serif}
+  .sheet{max-width:960px;margin:0 auto;padding:32px 20px 80px}
+  nav{border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:26px;
+      display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .seal{border:2px solid var(--seal);color:var(--seal);border-radius:50%;
+        width:42px;height:42px;line-height:38px;text-align:center;font-weight:700;
+        font-size:12px;letter-spacing:.04em;flex:none}
+  nav a{color:var(--ink);text-decoration:none;font-size:13px;letter-spacing:.06em;
+        text-transform:uppercase;padding-bottom:2px;border-bottom:2px solid transparent}
+  nav a:hover,nav a.on{border-bottom-color:var(--seal)}
+  nav .spacer{flex:1}
+  h1{font-size:20px;font-weight:650;margin:0 0 4px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);
+     margin:30px 0 12px;font-weight:600}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 24px}
+  label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.09em;
+        color:var(--muted);margin-bottom:5px}
+  input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--rule);
+        background:var(--card);border-radius:2px;font:inherit;
+        font-variant-numeric:tabular-nums}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--seal);outline-offset:1px}
+  .grid{display:grid;gap:14px 18px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  button{padding:11px 18px;border:0;background:var(--ink);color:var(--paper);
+         font:inherit;font-weight:600;border-radius:2px;cursor:pointer}
+  button:hover{background:var(--seal)}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.09em;
+     color:var(--muted);font-weight:600;padding:8px 6px;border-bottom:1px solid var(--ink)}
+  td{padding:9px 6px;border-bottom:1px solid var(--rule)}
+  .num{text-align:right}
+  .pill{font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+        border:1px solid var(--rule);padding:2px 7px;border-radius:999px;color:var(--muted)}
+  .pill.live{border-color:var(--good);color:var(--good)}
+  .pill.sold{border-color:var(--seal);color:var(--seal)}
+  .stat{background:var(--card);border:1px solid var(--rule);padding:14px}
+  .stat b{display:block;font-size:19px;font-weight:650;margin-top:3px}
+  .note{font-size:12px;color:var(--muted)}
+  .dutiable{font-size:11px;color:var(--seal);letter-spacing:.04em}
+  .chk{display:flex;align-items:center;gap:6px;margin-top:5px}
+  .chk input{width:auto}
+  @media(max-width:700px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.g2,.g3,.g4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <nav>
+    <span class="seal">LKR</span>
+    <a href="/" class="{% block n1 %}{% endblock %}">Calculator</a>
+    <a href="/inventory" class="{% block n2 %}{% endblock %}">Inventory</a>
+    <a href="/showroom" class="{% block n3 %}{% endblock %}">Showroom</a>
+    <span class="spacer"></span>
+    <a href="/docs" class="note">API</a>
+  </nav>
+  {% block body %}{% endblock %}
+</div>
+</body>
+</html>
