@@ -60,6 +60,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Lowercase the repository name
+        id: repo
+        run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
@@ -67,36 +71,29 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}   # short-lived, scoped, never a PAT
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         uses: docker/build-push-action@v6
         with:
           context: .
-          # Tag with the commit SHA, never `latest`. Build once, deploy that
-          # exact artifact everywhere -- staging and production run identical bytes.
-          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ghcr.io/${{ steps.repo.outputs.name }}:${{ github.sha }}
           push: ${{ github.event_name == 'push' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Scan image for vulnerabilities
-        # Pinned to a commit SHA, not a version tag. In March 2026 attackers
-        # force-pushed 75 of 76 trivy-action tags to point at a
-        # credential-stealing payload -- the tag names on the releases page
-        # never changed, only what they silently pointed to. A tag is a
-        # mutable pointer; a commit SHA is not.
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          image-ref: ghcr.io/${{ steps.repo.outputs.name }}:${{ github.sha }}
           severity: HIGH,CRITICAL
-          exit-code: "1"        # a vulnerable image is a failed build
-          ignore-unfixed: true  # do not block on CVEs with no patch available
+          exit-code: "1"
+          ignore-unfixed: true
 
       - name: Smoke test the built image
         run: |
           docker run -d --name smoke -p 8000:8000 \
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ steps.repo.outputs.name }}:${{ github.sha }}
           for i in $(seq 1 20); do
             curl -fs http://localhost:8000/readyz && exit 0
             sleep 1
