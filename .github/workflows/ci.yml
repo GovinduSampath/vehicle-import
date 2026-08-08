@@ -81,7 +81,12 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Scan image for vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
+        # Pinned to a commit SHA, not a version tag. In March 2026 attackers
+        # force-pushed 75 of 76 trivy-action tags to point at a
+        # credential-stealing payload -- the tag names on the releases page
+        # never changed, only what they silently pointed to. A tag is a
+        # mutable pointer; a commit SHA is not.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ghcr.io/${{ github.repository }}:${{ github.sha }}
           severity: HIGH,CRITICAL
