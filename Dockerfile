@@ -7,11 +7,17 @@ RUN pip install --no-cache-dir --prefix=/install \
       fastapi uvicorn[standard] jinja2 pyyaml pydantic python-multipart sqlalchemy
 
 FROM python:3.12-slim AS runtime
-# Never run as root. This is the first thing a reviewer looks for.
 RUN useradd --create-home --uid 10001 app
 COPY --from=build /install /usr/local
 WORKDIR /app
 COPY --chown=app:app app ./app
+
+# SQLite needs a writable directory. /app itself is root-owned even after
+# the chown above, since that only covers the app/ subfolder being copied
+# in -- this is what caused "unable to open database file" in CI.
+RUN mkdir -p /app/data && chown -R app:app /app/data
+ENV DATABASE_URL=sqlite:////app/data/inventory.db
+
 USER app
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
